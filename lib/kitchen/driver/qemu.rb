@@ -290,10 +290,6 @@ module Kitchen
         conn = instance.transport.connection(state)
         conn.wait_until_ready
         conn.execute(<<-EOS)
-sudo sh -s 2>/dev/null <<END
-echo '127.0.0.1 #{names}' >> /etc/hosts
-hostnamectl set-hostname #{hostname} || hostname #{hostname}
-END
 umask 0022
 install -dm700 "$HOME/.ssh"
 echo '#{@@PUBKEY}' > "$HOME/.ssh/authorized_keys"
