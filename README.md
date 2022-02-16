@@ -377,6 +377,11 @@ platforms:
 
         user_data: |
           #cloud-config
+          write_files:
+            - path: /tmp/plop
+              content: |
+                foobar
+
           users:
             - name: test123
               primary_group: test123
@@ -386,7 +391,6 @@ platforms:
                 - <%= SSH_PUBLIC_KEY %>
 
 ```
-
 
 ## <a name="development"></a> Development
 
