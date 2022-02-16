@@ -47,6 +47,14 @@ module Kitchen
       default_config :meta_data,   nil
       default_config :user_data,   nil
 
+      default_config :cloud_init, {
+        :meta_data => nil,
+        :user_data => nil,
+      }
+
+      default_config :ssh_private_key,    nil
+      default_config :ssh_public_key,    nil
+
       default_config :image_path do |_|
         if ENV.has_key?('KITCHEN_QEMU_IMAGES')
           ENV['KITCHEN_QEMU_IMAGES']
@@ -223,6 +231,8 @@ module Kitchen
         cmd.push('-spice', config[:spice].to_s) if config[:spice]
         cmd.push('-vnc',   config[:vnc].to_s)   if config[:vnc]
 
+
+
         cmd.push('-device', 'virtio-scsi-pci,id=scsi')
         config[:image].each_with_index do |image, i|
           drive = ['if=none', "id=drive#{i}"]
@@ -314,8 +324,11 @@ module Kitchen
         state[:hostname]      = '127.0.0.1'
         state[:port]          = port
         state[:username]      = config[:username]
-        state[:password]      = config[:password]
         state[:acpi_poweroff] = config[:acpi_poweroff]
+
+        # TODO: use password or ssh key but not both
+        #state[:password]      = config[:password]
+        state[:ssh_key]       = config[:ssh_private_key]
 
         if hostname == fqdn
           names = fqdn
@@ -323,17 +336,19 @@ module Kitchen
           names = "#{fqdn} #{hostname}"
         end
 
+        public_key = if config[:ssh_public_key]
+                       config[:ssh_public_key]
+                     else
+                       @@PUBKEY
+                     end
+
         info 'Waiting for SSH..'
         conn = instance.transport.connection(state)
         conn.wait_until_ready
         conn.execute(<<-EOS)
-sudo sh -s 2>/dev/null <<END
-echo '127.0.0.1 #{names}' >> /etc/hosts
-hostnamectl set-hostname #{hostname} || hostname #{hostname}
-END
 umask 0022
 install -dm700 "$HOME/.ssh"
-echo '#{@@PUBKEY}' > "$HOME/.ssh/authorized_keys"
+echo '#{public_key}' > "$HOME/.ssh/authorized_keys"
 EOS
         config[:hostshares].each_with_index do |share, i|
           options = share[:mount_options] ?
@@ -345,7 +360,6 @@ EOS
         # from now on we want to use the private key,
         # so delete the :password field and set :ssh_key
         state.delete(:password)
-        state[:ssh_key] = privkey_path
       end
 
       # Destroys an instance.
@@ -425,7 +439,11 @@ tY4IM9IaSC2LuPFVc0Kx6TwObdeQScOokIxL3HfayfLKieTLC+w2
       }.freeze
 
       def privkey_path
-        File.join(config[:kitchen_root], '.kitchen', 'kitchen-qemu.key')
+        if File.file?(config[:ssh_private_key])
+          config[:ssh_private_key]
+        else
+          File.join(config[:kitchen_root], '.kitchen', 'kitchen-qemu.key')
+        end
       end
 
       def monitor_path
