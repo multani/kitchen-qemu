@@ -249,6 +249,7 @@ module Kitchen
           File.open(meta_data,   File::CREAT|File::TRUNC|File::RDWR, 0600) { |f| f.write(config.fetch(:meta_data, '')) }
           File.open(user_data,   File::CREAT|File::TRUNC|File::RDWR, 0600) { |f| f.write(config.fetch(:user_data, '')) }
 
+          info 'Building cidata'
           geniso = [
             'genisoimage',
             '-output', cidata,
