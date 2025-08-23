@@ -344,24 +344,28 @@ behind all other options.
 
 ### cloud-init / SSH keys
 
-```
 ```yaml
 ---
 driver:
   name: qemu
 
+verifier:
+  name: shell
+
 platforms:
-  - name: test
+  - name: debian-13
     driver:
-      name: qemu
+      display: gtk
+      memory: 2048
+
+      image:
+        # https://cloud.debian.org/images/cloud/
+        - file: ./debian-13-genericcloud-amd64-20250814-2204.qcow2
+
       username: root
       password: root
-      memory: 2048
-      image:
-        # Download an image from https://cloud.debian.org/images/cloud/
-        - file: ./debian-13-genericcloud-amd64-20250814-2204.qcow2
-      display: gtk
 
+      # https://docs.cloud-init.io/en/24.1/reference/datasources/nocloud.html
       meta_data: |
         instance-id: iid-local01
         local-hostname: test-kitchen-plop
@@ -371,8 +375,9 @@ platforms:
         users:
           - name: debian
             ssh_authorized_keys:
-              - "ssh-ed25519 xxxxx"
+              - ssh-ed25519 xxxx
             sudo: "ALL=(ALL) NOPASSWD:ALL"
+
           - name: root
             plain_text_passwd: root
             lock_passwd: false
@@ -383,6 +388,9 @@ platforms:
               MaxAuthTries 600
               PermitRootLogin yes
               PasswordAuthentication yes
+
+suites:
+  - name: default
 
 ```
 

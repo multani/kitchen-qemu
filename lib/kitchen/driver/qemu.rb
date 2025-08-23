@@ -250,6 +250,7 @@ module Kitchen
           File.open(user_data,   File::CREAT|File::TRUNC|File::RDWR, 0600) { |f| f.write(config.fetch(:user_data, '')) }
 
           info 'Building cidata'
+          # https://docs.cloud-init.io/en/24.1/reference/datasources/nocloud.html#example-creating-a-disk
           geniso = [
             'genisoimage',
             '-output', cidata,
