@@ -341,6 +341,59 @@ kitchen-qemu. Using ``args`` to add more devices needed for a test should be
 fine though. The arguments are appended to the end of the QEMU command line,
 behind all other options.
 
+
+### cloud-init / SSH keys
+
+```yaml
+---
+driver:
+  name: qemu
+
+verifier:
+  name: shell
+
+platforms:
+  - name: debian-13
+    driver:
+      display: gtk
+      memory: 2048
+
+      image:
+        # https://cloud.debian.org/images/cloud/
+        - file: ./debian-13-genericcloud-amd64-20250814-2204.qcow2
+
+      username: root
+      password: root
+
+      # https://docs.cloud-init.io/en/24.1/reference/datasources/nocloud.html
+      meta_data: |
+        instance-id: iid-local01
+        local-hostname: test-kitchen-plop
+
+      user_data: |
+        #cloud-config
+        users:
+          - name: debian
+            ssh_authorized_keys:
+              - ssh-ed25519 xxxx
+            sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+          - name: root
+            plain_text_passwd: root
+            lock_passwd: false
+
+        write_files:
+          - path: /etc/ssh/sshd_config.d/root.conf
+            content: |
+              MaxAuthTries 600
+              PermitRootLogin yes
+              PasswordAuthentication yes
+
+suites:
+  - name: default
+
+```
+
 ## <a name="development"></a> Development
 
 * Source hosted at [GitHub][repo]
