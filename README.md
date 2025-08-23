@@ -354,26 +354,36 @@ platforms:
   - name: test
     driver:
       name: qemu
-      username: test123
-      password: test123
+      username: root
+      password: root
       memory: 2048
       image:
-        - file: ./vda.img
-        - file: ./seed.iso
+        # Download an image from https://cloud.debian.org/images/cloud/
+        - file: ./debian-13-genericcloud-amd64-20250814-2204.qcow2
       display: gtk
 
-      cloud_init:
-        meta_data: |
-          instance-id: iid-local01
-          local-hostname: test-kitchen-plop
+      meta_data: |
+        instance-id: iid-local01
+        local-hostname: test-kitchen-plop
 
-        user_data: |
-          #cloud-config
+      user_data: |
+        #cloud-config
+        users:
+          - name: debian
+            ssh_authorized_keys:
+              - "ssh-ed25519 xxxxx"
+            sudo: "ALL=(ALL) NOPASSWD:ALL"
+          - name: root
+            plain_text_passwd: root
+            lock_passwd: false
 
-          write_files:
-            - path: /tmp/plop
-              content: |
-                foobar
+        write_files:
+          - path: /etc/ssh/sshd_config.d/root.conf
+            content: |
+              MaxAuthTries 600
+              PermitRootLogin yes
+              PasswordAuthentication yes
+
 ```
 
 ## <a name="development"></a> Development
